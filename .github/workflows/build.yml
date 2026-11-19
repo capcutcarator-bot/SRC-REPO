@@ -18,31 +18,27 @@ jobs:
           ndk-version: r25c
           add-to-path: true
 
-      - name: Get Dobby prebuilt
+      - name: Install Ninja
+        run: sudo apt-get install -y ninja-build cmake
+
+      - name: Build Dobby from source
         run: |
-          mkdir -p jni/prebuilt/arm64-v8a
-          curl -L -o jni/prebuilt/arm64-v8a/libdobby.a \
-            "https://github.com/jmpews/Dobby/releases/download/alpha-1.0/libdobby_android_arm64.a" \
-            || true
-          if [ ! -s jni/prebuilt/arm64-v8a/libdobby.a ]; then
-            echo "Building Dobby..."
-            git clone --depth=1 https://github.com/jmpews/Dobby.git /tmp/Dobby
-            cd /tmp/Dobby && mkdir build && cd build
-            cmake .. \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
-              -DANDROID_ABI=arm64-v8a \
-              -DANDROID_PLATFORM=android-21 \
-              -DANDROID_STL=c++_static \
-              -DdobbySharedLibrary=OFF \
-              -DdobbyStaticLibrary=ON \
-              -DDOBBY_DEBUG=OFF \
-              -DBUILD_WITH_TRAMPOLINE_ASM=OFF \
-              -G Ninja
-            ninja -j$(nproc) || true
-            cp libdobby.a $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a || true
-          fi
-          ls -lh jni/prebuilt/arm64-v8a/libdobby.a
+          git clone --depth=1 https://github.com/jmpews/Dobby.git /tmp/Dobby
+          mkdir -p /tmp/Dobby/build && cd /tmp/Dobby/build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-21 \
+            -DANDROID_STL=c++_static \
+            -DdobbySharedLibrary=OFF \
+            -DdobbyStaticLibrary=ON \
+            -DDOBBY_DEBUG=OFF \
+            -G Ninja
+          ninja -j$(nproc)
+          mkdir -p $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a
+          cp libdobby.a $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a
+          echo "[✓] libdobby.a size: $(du -h $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a)"
 
       - name: Build libSHUVOxMODS.so
         run: |
