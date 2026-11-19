@@ -26,7 +26,7 @@ jobs:
           git clone --depth=1 https://github.com/jmpews/Dobby.git /tmp/Dobby
 
           # patch Apple GOT syntax → Linux LLVM syntax
-          ASM=/tmp/Dobby/source/TrampolineBridge/ClosureTrampolineBridge_arm64.asm
+          ASM=$(find /tmp/Dobby -name "ClosureTrampolineBridge_arm64.asm" 2>/dev/null | head -1)
           sed -i 's/@PAGE//g' "$ASM"
           sed -i 's/\(, [a-zA-Z_]*\)@PAGEOFF/\1/g' "$ASM"
           sed -i 's/\b\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGEOFF/:lo12:\1/g' "$ASM"
