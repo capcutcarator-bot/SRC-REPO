@@ -24,17 +24,9 @@ jobs:
       - name: Build Dobby
         run: |
           git clone --depth=1 https://github.com/jmpews/Dobby.git /tmp/Dobby
-
-          echo "ASM files:"
-          find /tmp/Dobby -name "*.asm" -o -name "*_arm64.S" 2>/dev/null
-
-          # patch Apple GOT relocations to Linux style in every asm file
-          while IFS= read -r f; do
-            echo "Patching $f"
-            sed -i 's/,[ \t]*\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGE$/, \1/' "$f"
-            sed -i 's/,[ \t]*\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGEOFF$/, :lo12:\1/' "$f"
-          done < <(find /tmp/Dobby -name "*.asm" 2>/dev/null)
-
+          find /tmp/Dobby -name "*.asm" -exec sed -i 's/@PAGE//g' {} \;
+          find /tmp/Dobby -name "*.asm" -exec perl -i -pe 's/(\w+)\@PAGEOFF/:lo12:$1/g' {} \;
+          find /tmp/Dobby -name "*.asm" | xargs grep -l "@" || echo "patch ok"
           mkdir -p /tmp/Dobby/build && cd /tmp/Dobby/build
           cmake .. \
             -DCMAKE_BUILD_TYPE=Release \
@@ -47,7 +39,6 @@ jobs:
             -DDOBBY_DEBUG=OFF \
             -G Ninja
           ninja -j$(nproc)
-
           mkdir -p $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a
           cp libdobby.a $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a
           du -h $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a
