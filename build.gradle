@@ -1,0 +1,32 @@
+plugins { id 'com.android.library' }
+
+android {
+    compileSdk 34
+    ndkVersion "25.2.9519653"
+    defaultConfig {
+        minSdk 21
+        targetSdk 34
+        externalNativeBuild {
+            ndkBuild {
+                abiFilters "arm64-v8a"
+                arguments "NDK_APPLICATION_MK=jni/Application.mk"
+            }
+        }
+    }
+    externalNativeBuild { ndkBuild { path "jni/Android.mk" } }
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs     = ['src/main/java']
+            assets.srcDirs   = ['assets']
+            jniLibs.srcDirs  = ['libs']
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+repositories { maven { url 'https://jitpack.io' } }
+dependencies { compileOnly 'de.robv.android.xposed:api:82' }
