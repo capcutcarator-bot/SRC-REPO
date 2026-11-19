@@ -25,11 +25,15 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/jmpews/Dobby.git /tmp/Dobby
 
-          # patch Apple GOT syntax → Linux LLVM syntax
-          ASM=$(find /tmp/Dobby -name "ClosureTrampolineBridge_arm64.asm" 2>/dev/null | head -1)
-          sed -i 's/@PAGE//g' "$ASM"
-          sed -i 's/\(, [a-zA-Z_]*\)@PAGEOFF/\1/g' "$ASM"
-          sed -i 's/\b\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGEOFF/:lo12:\1/g' "$ASM"
+          echo "ASM files:"
+          find /tmp/Dobby -name "*.asm" -o -name "*_arm64.S" 2>/dev/null
+
+          # patch Apple GOT relocations to Linux style in every asm file
+          while IFS= read -r f; do
+            echo "Patching $f"
+            sed -i 's/,[ \t]*\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGE$/, \1/' "$f"
+            sed -i 's/,[ \t]*\([a-zA-Z_][a-zA-Z0-9_]*\)@PAGEOFF$/, :lo12:\1/' "$f"
+          done < <(find /tmp/Dobby -name "*.asm" 2>/dev/null)
 
           mkdir -p /tmp/Dobby/build && cd /tmp/Dobby/build
           cmake .. \
@@ -46,7 +50,7 @@ jobs:
 
           mkdir -p $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a
           cp libdobby.a $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a
-          echo "[✓] $(du -h $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a)"
+          du -h $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a/libdobby.a
 
       - name: Build libSHUVOxMODS.so
         run: |
