@@ -34,6 +34,7 @@ jobs:
             -DdobbySharedLibrary=OFF \
             -DdobbyStaticLibrary=ON \
             -DDOBBY_DEBUG=OFF \
+            -DBUILD_WITH_TRAMPOLINE_ASM=OFF \
             -G Ninja
           ninja -j$(nproc)
           mkdir -p $GITHUB_WORKSPACE/jni/prebuilt/arm64-v8a
